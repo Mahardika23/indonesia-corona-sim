@@ -64,7 +64,7 @@ PatientArr = {}
 HealOrDieList = {}
 
 # RO probability
-ROPROB = 90
+ROPROB = 100
 
 # function to generate probability Array
 def randomSeedArray(pctFail):
@@ -150,7 +150,7 @@ def Jakarta(env, start_with):
 
         #print(PatientArr)
         print('Jakarta Day#%d' % env.now, JakartaCluster)
-        yield env.timeout(1)
+        yield env.timeout(1) 
 
 def CalcNewInfection(Cluster, Config):
     global ROPROB
@@ -167,6 +167,13 @@ def CalcNewInfection(Cluster, Config):
 
     print('Jakarta Day#%d - New Patient: %d' % (env.now, totnew), JakartaCluster)
     return totnew
+
+def ROUpdate(env):
+    global ROPROB
+    while True:
+        ROPROB = max(ROPROB - randint(9,23), randint(13,18))
+        print("Day #%d - ROPROB reduced: %d" % (env.now, ROPROB))
+        yield env.timeout(5)
 
 def Hospitalized(env, Cluster, Patient, Config):
     someArray = randomSeedArray(Config.hosprob)
@@ -227,11 +234,12 @@ def HealOrDie(env):
         yield env.timeout(1)
 
 env = simpy.Environment()
-env.process(Jakarta(env, 2))
+env.process(Jakarta(env, 1))
 env.process(HealOrDie(env))
+env.process(ROUpdate(env))
 #env.process(Heal(env))
 #env.process(Die(env))
-env.run(until=10)
+env.run(until=120)
 
 print('Jakarta Day#%d' % env.now, JakartaCluster)
 #print(PatientArr)
