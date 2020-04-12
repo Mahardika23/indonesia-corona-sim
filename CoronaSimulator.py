@@ -64,7 +64,7 @@ PatientArr = {}
 HealOrDieList = {}
 
 # RO probability
-ROPROB = 100
+ROPROB = 95
 
 # function to generate probability Array
 def randomSeedArray(pctFail):
@@ -120,13 +120,16 @@ def Jakarta(env, start_with):
             JakartaCluster.total += 1
             JakartaCluster.danger += 1
             
-            
             Hospitalized(env, JakartaCluster, NewPatient, Config)
             if NewPatient.hop != 1 :
                 Isolate(env, JakartaCluster, NewPatient, Config)
 
-            if NewPatient.hop == 1 or NewPatient.iso == 1 : NewPatient.inf = 10
-            else : NewPatient.inf = 90
+            if NewPatient.hop == 1:
+                NewPatient.inf = randint(9,13)
+            elif NewPatient.iso == 1 :
+                NewPatient.inf = randint(11,17)
+            else : 
+                NewPatient.inf = randint(87,91)
 
             Infect(env, JakartaCluster, NewPatient, Config)
             
@@ -171,9 +174,9 @@ def CalcNewInfection(Cluster, Config):
 def ROUpdate(env):
     global ROPROB
     while True:
-        ROPROB = max(ROPROB - randint(9,23), randint(13,18))
-        print("Day #%d - ROPROB reduced: %d" % (env.now, ROPROB))
-        yield env.timeout(5)
+        ROPROB = max(ROPROB - randint(9,17), randint(13,18))
+        print("Jakarta Day #%d - ROPROB reduced: %d" % (env.now, ROPROB))
+        yield env.timeout(randint(5,13))
 
 def Hospitalized(env, Cluster, Patient, Config):
     someArray = randomSeedArray(Config.hosprob)
@@ -239,7 +242,7 @@ env.process(HealOrDie(env))
 env.process(ROUpdate(env))
 #env.process(Heal(env))
 #env.process(Die(env))
-env.run(until=120)
+env.run(until=365)
 
 print('Jakarta Day#%d' % env.now, JakartaCluster)
 #print(PatientArr)
