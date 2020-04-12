@@ -63,12 +63,15 @@ PatientArr = {}
 # Dict of Patients die or healed
 HealOrDieList = {}
 
+# RO probability
+ROPROB = 90
+
 # function to generate probability Array
 def randomSeedArray(pctFail):
     someArray = []
     choices = [1,2] #1 === good option  2 === bad bad bad
     cnt = 0
-    for i in range(1,100):
+    for i in range(100):
         c = random.choice(choices)
         if c == 2: 
             cnt+=1
@@ -107,9 +110,9 @@ def Jakarta(env, start_with):
 
     curIndex = 1
     while True:
-        add_patient = int(JakartaCluster.infect * Config.ro)
+        add_patient = CalcNewInfection(JakartaCluster, Config)
 
-        for i in range (0, max(add_patient-1,1)):
+        for i in range (add_patient):
             curIndex = int(JakartaCluster.total+1)
             # Shuffle our magic array
 
@@ -149,6 +152,21 @@ def Jakarta(env, start_with):
         print('Jakarta Day#%d' % env.now, JakartaCluster)
         yield env.timeout(1)
 
+def CalcNewInfection(Cluster, Config):
+    global ROPROB
+    ro = Config.ro
+    infectcnt = Cluster.infect
+    someArray = randomSeedArray(100-ROPROB)
+
+    totnew = 0
+    for i in range(infectcnt):
+        random.shuffle(someArray)
+        prob = random.choice(someArray)
+        if prob == 1: #infectingggg!!!
+            totnew += ro
+
+    print('Jakarta Day#%d - New Patient: %d' % (env.now, totnew), JakartaCluster)
+    return totnew
 
 def Hospitalized(env, Cluster, Patient, Config):
     someArray = randomSeedArray(Config.hosprob)
@@ -213,7 +231,7 @@ env.process(Jakarta(env, 2))
 env.process(HealOrDie(env))
 #env.process(Heal(env))
 #env.process(Die(env))
-env.run(until=365)
+env.run(until=10)
 
 print('Jakarta Day#%d' % env.now, JakartaCluster)
 #print(PatientArr)
