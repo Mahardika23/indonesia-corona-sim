@@ -12,6 +12,7 @@ import inspect
 import math
 import random
 import os
+import numpy as np
 from random import seed,randint
 from collections import namedtuple
 from recordtype import recordtype
@@ -71,16 +72,9 @@ def randomSeedArray(pctFail):
     someArray = []
     choices = [1,2] #1 === good option  2 === bad bad bad
     cnt = 0
-    for i in range(100):
-        c = random.choice(choices)
-        if c == 2: 
-            cnt+=1
-        if cnt > pctFail:
-            c = 1
-        if i >= (100-pctFail) and cnt < pctFail :
-            c = 2 
-            cnt+=1
-        someArray.append(c)
+
+    someArray = np.random.choice(choices, 100, p=[(100-pctFail)/100, pctFail/100])
+    #print("------------------------- PCTFAIL: %d" % pctFail)
     #print(someArray)
     return someArray
 
@@ -160,23 +154,26 @@ def CalcNewInfection(Cluster, Config):
     ro = Config.ro
     infectcnt = Cluster.infect
     someArray = randomSeedArray(100-ROPROB)
-
     totnew = 0
     for i in range(infectcnt):
         random.shuffle(someArray)
         prob = random.choice(someArray)
         if prob == 1: #infectingggg!!!
             totnew += ro
-
     print('Jakarta Day#%d - New Patient: %d' % (env.now, totnew), JakartaCluster)
     return totnew
 
 def ROUpdate(env):
     global ROPROB
+
     while True:
-        ROPROB = max(ROPROB - randint(9,17), randint(13,18))
-        print("Jakarta Day #%d - ROPROB reduced: %d" % (env.now, ROPROB))
-        yield env.timeout(randint(5,13))
+        if (env.now >= 115 and env.now <= 140):
+            ROPROB = 83
+        else: 
+            ROPROB = max(ROPROB - randint(9,17), randint(13,18))
+
+        print("Jakarta Day #%d - ROPROB updated: %d" % (env.now, ROPROB))
+        yield env.timeout(randint(14,21))
 
 def Hospitalized(env, Cluster, Patient, Config):
     someArray = randomSeedArray(Config.hosprob)
@@ -206,6 +203,13 @@ def Infect(env, Cluster, Patient, Config):
     if prob == 2: #infecting
         Cluster.infect += 1
         Patient.infstat = 1
+
+def ROZero(env):
+    global ROPROB
+    while True:
+        ROPROB = 1 #not really zero, but yeah
+        print("Jakarta Day #%d - ROPROB reduced to ZERO: %d" % (env.now, ROPROB))
+        yield env.timeout(randint(7,11))
 
 def HealOrDie(env):
     global PatientArr
@@ -240,8 +244,7 @@ env = simpy.Environment()
 env.process(Jakarta(env, 1))
 env.process(HealOrDie(env))
 env.process(ROUpdate(env))
-#env.process(Heal(env))
-#env.process(Die(env))
+#env.process(ROZero(env))
 env.run(until=365)
 
 print('Jakarta Day#%d' % env.now, JakartaCluster)
